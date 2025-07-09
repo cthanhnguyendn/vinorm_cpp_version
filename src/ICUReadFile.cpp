@@ -39,22 +39,11 @@ bool ICUReadFile::readFile() {
     charBuf[rawFileLen]=0;
     fclose(file);
     
-    // Look for a Unicode Signature (BOM) in the data
-    
-    int32_t        signatureLength;
+    // Force UTF-8 encoding for all input
     const char *   charDataStart = charBuf;
+    const char*    encoding      = "UTF-8";
+    int32_t        signatureLength = 0;
     UErrorCode     status        = U_ZERO_ERROR;
-    const char*    encoding      = ucnv_detectUnicodeSignature(
-            charDataStart, rawFileLen, &signatureLength, &status);
-    if (U_FAILURE(status)) {
-        fprintf(stderr, "[E] ICU Error \"%s\" from ucnv_detectUnicodeSignature()\n",
-                u_errorName(status));
-        return false;
-    }
-    if(encoding!=NULL ){
-        charDataStart  += signatureLength;
-        rawFileLen     -= signatureLength;
-    }
     
     // Open a converter to take the file to UTF-16
     

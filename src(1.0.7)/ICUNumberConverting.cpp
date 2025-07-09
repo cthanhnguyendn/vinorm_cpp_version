@@ -91,7 +91,7 @@ UnicodeString ConvertingNumber::stripZeros(const UnicodeString& num, int32_t z) 
 }
 UnicodeString ConvertingNumber::convertNumber(const UnicodeString &num) {
     if (num == UnicodeString("0"))
-        return UnicodeString("không");
+        return UnicodeString::fromUTF8("không");
     
     // if num contains non digit characters, return empty string
     StringCharacterIterator iter(num);

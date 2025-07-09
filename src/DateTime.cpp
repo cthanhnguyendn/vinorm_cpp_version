@@ -1,3 +1,9 @@
+#ifndef FALSE
+#define FALSE 0
+#endif
+#ifndef TRUE
+#define TRUE 1
+#endif
 #include "DateTime.h"
 void DateTime::loadPatterns(int categories, string filename) {
     // Open file, read line by line
@@ -51,6 +57,9 @@ UnicodeString DateTime::normalizeText(const UnicodeString &input) {
             
         }
     }
+    // Collapse multiple spaces and trim
+    preResult.findAndReplace("  ", " ");
+    preResult.trim();
     return preResult;
 }
 DateTime::DateTime() {
@@ -61,6 +70,7 @@ DateTime::DateTime() {
     loadPatterns(MONTH, F_MONTH);
     loadPatterns(DATE_3, F_DATE_3);
     loadPatterns(DATE_2, F_DATE_2);
+    loadPatterns(DATE_MM_YYYY, F_DATE_MM_YYYY);
 }
 DateTime::~DateTime() {
     u_cleanup();
@@ -82,6 +92,8 @@ UnicodeString DateTime::stringForReplace(int categories, RegexMatcher* matcher, 
             return regexDate3(matcher, status);
         case DATE_2:
             return regexDate2(matcher, status);
+        case DATE_MM_YYYY:
+            return regexDateMMYYYY(matcher, status);
         default:
             cerr << "[E] Invalid category: " << categories << '\n';
     }
@@ -116,21 +128,21 @@ UnicodeString DateTime::regexTime(RegexMatcher* matcher, UErrorCode &status) {
                 result += converter.convertNumber(number) + " ";
                 number = UnicodeString();
             }
-            result += "giờ ";
+            result += UnicodeString::fromUTF8("giờ ");
         } else if (c == LATIN_SMALL_LETTER_A) {
             if (continuousDigits) {
                 continuousDigits = false;
                 result += converter.convertNumber(number) + " ";
                 number = UnicodeString();
             }
-            result += "ây em ";
+            result += UnicodeString::fromUTF8("ây em ");
         } else if (c == LATIN_SMALL_LETTER_A + p_offset) {
             if (continuousDigits) {
                 continuousDigits = false;
                 result += converter.convertNumber(number) + " ";
                 number = UnicodeString();
             }
-            result += "bi em ";
+            result += UnicodeString::fromUTF8("bi em ");
         } else if (c == LATIN_SMALL_LETTER_A + m_offset) {
             
         } else {
@@ -145,7 +157,7 @@ UnicodeString DateTime::regexTime(RegexMatcher* matcher, UErrorCode &status) {
     if (number.length() > 0)
         result += " " + converter.convertNumber(number) + " ";
     if (next == HYPEN_MINUS){
-        result+="đến ";
+        result += UnicodeString::fromUTF8("đến ");
     }
     return result;
 }
@@ -179,7 +191,7 @@ UnicodeString DateTime::regexDate1(RegexMatcher* matcher, UErrorCode &status) {
                 result += converter.convertNumber(number);
                 number = UnicodeString();
             } else if (checkDate == 2) {
-                result += " tháng ";
+                result += UnicodeString::fromUTF8(" tháng ");
                 checkDate++;
                 continuousDigits = 0;
                 result += converter.convertNumber(number);
@@ -194,7 +206,7 @@ UnicodeString DateTime::regexDate1(RegexMatcher* matcher, UErrorCode &status) {
             result += c;
         }
     }
-    result += " năm " + converter.convertNumber(number);
+    result += UnicodeString::fromUTF8(" năm ") + converter.convertNumber(number);
     return result;
 }
 UnicodeString DateTime::regexDateFromTo_1(RegexMatcher* matcher, UErrorCode &status) {
@@ -220,12 +232,12 @@ UnicodeString DateTime::regexDateFromTo_1(RegexMatcher* matcher, UErrorCode &sta
         } else if (c == SOLIDUS || c == FULL_STOP) {
             continuousDigits = false;
             result += converter.convertNumber(number);
-            result += " tháng ";
+            result += UnicodeString::fromUTF8(" tháng ");
             number = UnicodeString();
         } else if (c == HYPEN_MINUS) {
             continuousDigits = false;
             result += converter.convertNumber(number);
-            result += " đến ";
+            result += UnicodeString::fromUTF8(" đến ");
             number = UnicodeString();
         }
         else {
@@ -263,12 +275,12 @@ UnicodeString DateTime::regexDateFromTo_2(RegexMatcher* matcher, UErrorCode &sta
         } else if (c == SOLIDUS || c == FULL_STOP) {
             continuousDigits = false;
             result += converter.convertNumber(number);
-            result += " năm ";
+            result += UnicodeString::fromUTF8(" năm ");
             number = UnicodeString();
         } else if (c == HYPEN_MINUS) {
             continuousDigits = false;
             result += converter.convertNumber(number);
-            result += " đến tháng ";
+            result += UnicodeString::fromUTF8(" đến tháng ");
             number = UnicodeString();
         }
         else {
@@ -306,7 +318,7 @@ UnicodeString DateTime::regexMonth(RegexMatcher* matcher, UErrorCode &status) {
         } else if (c == SOLIDUS || c == FULL_STOP || c == HYPEN_MINUS) {
             continuousDigits = false;
             result += converter.convertNumber(number);
-            result += " năm ";
+            result += UnicodeString::fromUTF8(" năm ");
             number = UnicodeString();
         } else {
             if (continuousDigits) {
@@ -343,7 +355,7 @@ UnicodeString DateTime::regexDate3(RegexMatcher* matcher, UErrorCode &status) {
         } else if (c == SOLIDUS || c == FULL_STOP || c == HYPEN_MINUS) {
             continuousDigits = false;
             result += converter.convertNumber(number);
-            result += " tháng ";
+            result += UnicodeString::fromUTF8(" tháng ");
             number = UnicodeString();
         } else {
             if (continuousDigits) {
@@ -368,5 +380,40 @@ UnicodeString DateTime::regexDate2(RegexMatcher* matcher, UErrorCode &status) {
         result+=" "+ICUHelper::readNumber(checkRoman,0)+" ";
     }
     
-    return result+"năm "+converter.convertNumber(YearPart);
+    return result + UnicodeString::fromUTF8("năm ") + converter.convertNumber(YearPart);
+}
+
+UnicodeString DateTime::regexDateMMYYYY(RegexMatcher* matcher, UErrorCode &status) {
+    UnicodeString match = matcher->group(status);
+    match.toLower();
+    UnicodeString result;
+    UnicodeString number;
+    ConvertingNumber converter;
+    bool continuousDigits = false;
+    
+    StringCharacterIterator iter(match);
+    for (auto c = iter.first32(); c != StringCharacterIterator::DONE; c = iter.next32()) {
+        if (DIGIT_ZERO <= c && c <= DIGIT_ZERO + 9) {
+            if (continuousDigits) {
+                number += c;
+            } else {
+                number = c;
+                continuousDigits = true;
+            }
+        } else if (c == SOLIDUS || c == FULL_STOP || c == HYPEN_MINUS) {
+            continuousDigits = false;
+            result += UnicodeString::fromUTF8("tháng ") + converter.convertNumber(number);
+            result += UnicodeString::fromUTF8(" năm ");
+            number = UnicodeString();
+        } else {
+            if (continuousDigits) {
+                continuousDigits = false;
+                result += converter.convertNumber(number);
+                number = UnicodeString();
+            }
+            result += c;
+        }
+    }
+    result += converter.convertNumber(number);
+    return result;
 }

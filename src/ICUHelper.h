@@ -120,12 +120,12 @@ class ICUHelper{
                 if (baseUnit.hasMappingOf(currentUnit) || isNumberLiteral(currentUnit)) {
                     if (isNumberLiteral(currentUnit)) {
                         if (currentUnit == "2") {
-                            normalizedText += " vuông ";
+                            normalizedText += " " + UnicodeString::fromUTF8("vuông") + " ";
                         } else if (currentUnit == "3") {
-                            normalizedText += " khối ";
+                            normalizedText += " " + UnicodeString::fromUTF8("khối") + " ";
                         } else {
                             ConvertingNumber converter;
-                            normalizedText += " mũ " + converter.convertNumber(currentUnit) + " "; 
+                            normalizedText += " " + UnicodeString::fromUTF8("mũ") + " " + converter.convertNumber(currentUnit) + " "; 
                         }
                     } else {
                         if (baseUnit.hasMappingOf(currentUnit))
@@ -152,7 +152,7 @@ class ICUHelper{
                 //Unit: " << compositeUnits[i] << '\n';
                 normalizedText += " "+splitCompositeUnit(compositeUnits[i])+" ";
                 if (compositeUnits.size() > 1 && i != (int) compositeUnits.size() - 1) {
-                    normalizedText += " trên ";
+                    normalizedText += " " + UnicodeString::fromUTF8("trên") + " ";
                 }
             }
             return removeExtraWhitespace(normalizedText);
@@ -193,7 +193,7 @@ class ICUHelper{
                 for (auto c = iter.first32(); c != StringCharacterIterator::DONE; c = iter.next32()) {
                     if (DIGIT_ZERO == c && checkZF == 0)
                     {
-                        Zerofrac+=" không ";
+                        Zerofrac+=" " + UnicodeString::fromUTF8("không") + " ";
                         
                         continue;
                     }
@@ -219,7 +219,7 @@ class ICUHelper{
             else
             {
                 
-                return " " + converter.convertNumber(integerPartProcessed) + " phẩy " + Zerofrac
+                return " " + converter.convertNumber(integerPartProcessed) + " " + UnicodeString::fromUTF8("phẩy") + " " + Zerofrac
                     + converter.convertNumber(fractionalPart.trim()) + " ";
             }
         }

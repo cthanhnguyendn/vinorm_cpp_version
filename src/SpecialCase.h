@@ -45,12 +45,16 @@ class SpecialCase{
         static constexpr int FOOTBALL_OTHER = 2;
         static constexpr int EMAIL = 3;
         static constexpr int WEBSITE = 4;
+        static constexpr int ACRONYMS = 5;
+        static constexpr int TEENCODE = 6;
         // File name contains patterns
         const string F_PHONE_NUMBER = "PhoneNumber.txt";
         const string F_FOOTBALL_UNDER= "FootballUnder.txt";
         const string F_FOOTBALL_OTHER= "FootballOther.txt";
         const string F_WEBSITE= "Website.txt";
         const string F_EMAIL= "Email.txt";
+        const string F_ACRONYMS = "Acronyms.txt";
+        const string F_TEENCODE = "Teencode.txt";
         
         map<int, vector<UnicodeString>> patterns;
         // Processing match by regex in each categories
@@ -59,6 +63,8 @@ class SpecialCase{
         UnicodeString regexFootballOther(RegexMatcher* matcher, UErrorCode &status);
         UnicodeString regexWebsite(RegexMatcher* matcher, UErrorCode &status);
         UnicodeString regexEmail(RegexMatcher* matcher, UErrorCode &status);
+        UnicodeString regexAcronyms(RegexMatcher* matcher, UErrorCode &status);
+        UnicodeString regexTeencode(RegexMatcher* matcher, UErrorCode &status);
         // Wrapper function to return string for replacing match by regex
         UnicodeString stringForReplace(int categories, RegexMatcher* matcher, UErrorCode &status);
         void loadPatterns(int categories, string filename);

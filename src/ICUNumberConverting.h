@@ -19,26 +19,26 @@ using ICUConstant::LATIN_CAPITAL_LETTER_A;
 using icu::StringCharacterIterator;
 class ConvertingNumber{
     private:
-        vector<UnicodeString> CHU_SO = {UnicodeString("không"), 
-            UnicodeString("một"), UnicodeString("hai"),
-            UnicodeString("ba"), UnicodeString("bốn"), 
-            UnicodeString("năm"), UnicodeString("sáu"), 
-            UnicodeString("bảy"), UnicodeString("tám"),
-            UnicodeString("chín")};
-        const UnicodeString MUOI_F{"mười"};
-        const UnicodeString MUOI{"mươi"};
-        const UnicodeString HUNDRED{"trăm"};
-        const UnicodeString THOUSAND{"nghìn"};
-        const UnicodeString MILLION{"triệu"};
-        const UnicodeString BILLION{ "tỷ" };
-        const UnicodeString MOTS{ "mốt" };
-        const UnicodeString TUW{ "tư" };
-        const UnicodeString LAWM{ "lăm" };
-        const UnicodeString LINH{ "linh" };
-        const UnicodeString SPACE{ " " };
-        const UnicodeString COMMA{ ", " };
-        const UnicodeString NGHIN{"nghìn"};
-        const UnicodeString TRIEU{"triệu"};
+        vector<UnicodeString> CHU_SO = {UnicodeString::fromUTF8("không"), 
+            UnicodeString::fromUTF8("một"), UnicodeString::fromUTF8("hai"),
+            UnicodeString::fromUTF8("ba"), UnicodeString::fromUTF8("bốn"), 
+            UnicodeString::fromUTF8("năm"), UnicodeString::fromUTF8("sáu"), 
+            UnicodeString::fromUTF8("bảy"), UnicodeString::fromUTF8("tám"),
+            UnicodeString::fromUTF8("chín")};
+        const UnicodeString MUOI_F = UnicodeString::fromUTF8("mười");
+        const UnicodeString MUOI = UnicodeString::fromUTF8("mươi");
+        const UnicodeString HUNDRED = UnicodeString::fromUTF8("trăm");
+        const UnicodeString THOUSAND = UnicodeString::fromUTF8("nghìn");
+        const UnicodeString MILLION = UnicodeString::fromUTF8("triệu");
+        const UnicodeString BILLION = UnicodeString::fromUTF8("tỷ");
+        const UnicodeString MOTS = UnicodeString::fromUTF8("mốt");
+        const UnicodeString TUW = UnicodeString::fromUTF8("tư");
+        const UnicodeString LAWM = UnicodeString::fromUTF8("lăm");
+        const UnicodeString LINH = UnicodeString::fromUTF8("linh");
+        const UnicodeString SPACE = UnicodeString::fromUTF8(" ");
+        const UnicodeString COMMA = UnicodeString::fromUTF8(", ");
+        const UnicodeString NGHIN = UnicodeString::fromUTF8("nghìn");
+        const UnicodeString TRIEU = UnicodeString::fromUTF8("triệu");
         UnicodeString convertNumberLTHundred(const UnicodeString& num);
         UnicodeString convertNumberLTThousand(const UnicodeString& num); 
         UnicodeString convertNumberLTMillion(const UnicodeString& num); 

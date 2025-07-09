@@ -1,0 +1,4 @@
+Testing Vietnamese text encoding:
+123 -> một trăm hai mươi ba
+1000 -> một nghìn
+Direct Vietnamese: số một trăm hai mười ba

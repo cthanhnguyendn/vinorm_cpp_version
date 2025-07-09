@@ -1,3 +1,13 @@
+#ifndef FALSE
+#define FALSE 0
+#endif
+#ifndef TRUE
+#define TRUE 1
+#endif
+#include <unicode/utypes.h>
+#include <unicode/unistr.h>
+#include <unicode/regex.h>
+#include <unicode/umachine.h>
 #include "SpecialCase.h"
 void SpecialCase::loadPatterns(int categories, string filename) {
     // Open file, read line by line
@@ -28,6 +38,10 @@ UnicodeString SpecialCase::stringForReplace(int categories, RegexMatcher* matche
             return regexWebsite(matcher, status);
         case EMAIL:
             return regexEmail(matcher, status);
+        case ACRONYMS:
+            return regexAcronyms(matcher, status);
+        case TEENCODE:
+            return regexTeencode(matcher, status);
         default:
             cerr << "[E] Invalid category: " << categories << '\n';
     }
@@ -117,10 +131,10 @@ UnicodeString SpecialCase::regexWebsite(RegexMatcher* matcher, UErrorCode &statu
                 result += " " + converter.convertNumber(c) + " ";
             }
             else if ( UnicodeString(c) == FULL_STOP ) {
-                result += " chấm ";
+                result += UnicodeString::fromUTF8(" chấm ");
             }
             else if ( UnicodeString(c) == SOLIDUS ){
-                result += " xuyệt ";
+                result += UnicodeString::fromUTF8(" xuyệt ");
             }
             else result += " "+letterSoundVN.mappingOf(UnicodeString(c))+" ";
         }
@@ -154,7 +168,7 @@ UnicodeString SpecialCase::regexEmail(RegexMatcher* matcher, UErrorCode &status)
     UnicodeString result;
     for (auto c = iter.first32(); c != StringCharacterIterator::DONE; c = iter.next32(), i++) {
         if (indexOfCom != -1 && i >= indexOfCom) {
-            result += " meo chấm com ";
+            result += UnicodeString::fromUTF8(" meo chấm com ");
             break;
         } else {
             
@@ -162,10 +176,10 @@ UnicodeString SpecialCase::regexEmail(RegexMatcher* matcher, UErrorCode &status)
                 result += " " + converter.convertNumber(c) + " ";
             }
             else if ( UnicodeString(c) == FULL_STOP ) {
-                result += " chấm ";
+                result += UnicodeString::fromUTF8(" chấm ");
             }
             else if ( UnicodeString(c) == SOLIDUS ){
-                result += " xuyệt ";
+                result += UnicodeString::fromUTF8(" xuyệt ");
             }
             else result += " "+letterSoundEN.mappingOf(UnicodeString(c))+" ";
         }
@@ -184,7 +198,7 @@ UnicodeString SpecialCase::regexPhoneNumber(RegexMatcher* matcher, UErrorCode &s
     UChar32 c;
     for (c = iter.first32(); c != StringCharacterIterator::DONE; c = iter.next32()) {
         if (c == PLUS_SIGN)
-            result.append(UnicodeString("cộng "));
+            result.append(UnicodeString::fromUTF8("cộng "));
         else if (c == FULL_STOP || c == COLON || c == HYPEN_MINUS 
                 || c == LEFT_PARENTHESIS || c == RIGHT_PARENTHESIS) {
             // ignore this case
@@ -234,12 +248,75 @@ UnicodeString SpecialCase::normalizeText(const UnicodeString &input) {
     }
     return preResult;
 }
+
+UnicodeString SpecialCase::regexAcronyms(RegexMatcher* matcher, UErrorCode &status) {
+    UnicodeString match = matcher->group(status);
+    UnicodeString result;
+    UnicodeString word, number;
+    ConvertingNumber converter;
+    bool continuousDigits = false;
+    
+    StringCharacterIterator iter(match);
+    for (auto c = iter.first32(); c != StringCharacterIterator::DONE; c = iter.next32()) {
+        if (DIGIT_ZERO <= c && c <= DIGIT_ZERO + 9) {
+            if (continuousDigits) {
+                number += c;
+            } else {
+                number = c;
+                continuousDigits = true;
+            }
+        } else if (c == HYPEN_MINUS) {
+            continuousDigits = false;
+            // Add a space before the number
+            result += word + " ";
+            word = "";
+        } else {
+            if (continuousDigits) {
+                continuousDigits = false;
+                result += converter.convertNumber(number);
+                number = UnicodeString();
+            }
+            word += c;
+        }
+    }
+    if (word.length() > 0) {
+        result += word + " ";
+    }
+    if (number.length() > 0) {
+        result += converter.convertNumber(number);
+    }
+    // Collapse multiple spaces and trim
+    result.findAndReplace("  ", " ");
+    result.trim();
+    return result;
+}
+
+UnicodeString SpecialCase::regexTeencode(RegexMatcher* matcher, UErrorCode &status) {
+    UnicodeString match = matcher->group(status);
+    match.toLower();
+    
+    // Simple teen code mapping
+    if (match == "xmz") return UnicodeString::fromUTF8("xinh mắt zai");
+    if (match == "xinh") return UnicodeString::fromUTF8("xinh");
+    if (match == "dep") return UnicodeString::fromUTF8("đẹp");
+    if (match == "ngu") return UnicodeString::fromUTF8("ngu");
+    if (match == "vcl") return UnicodeString::fromUTF8("vãi cả lồn");
+    if (match == "vcc") return UnicodeString::fromUTF8("vãi cả cứt");
+    if (match == "dm") return UnicodeString::fromUTF8("địt mẹ");
+    if (match == "clm") return UnicodeString::fromUTF8("cặc lồn mẹ");
+    
+    // If no specific mapping, return the original
+    return match;
+}
+
 SpecialCase::SpecialCase() {
     loadPatterns(PHONE_NUMBER, F_PHONE_NUMBER);
     loadPatterns(FOOTBALL_UNDER, F_FOOTBALL_UNDER);
     loadPatterns(FOOTBALL_OTHER, F_FOOTBALL_OTHER);
     loadPatterns(WEBSITE, F_WEBSITE);
     loadPatterns(EMAIL, F_EMAIL);
+    loadPatterns(ACRONYMS, F_ACRONYMS);
+    loadPatterns(TEENCODE, F_TEENCODE);
 }
 SpecialCase::~SpecialCase() {
     u_cleanup();

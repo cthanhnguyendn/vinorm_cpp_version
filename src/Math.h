@@ -43,11 +43,13 @@ class Math{
         static constexpr int MEASUREMENT= 1;
         static constexpr int MEASUREMENT_1= 2;
         static constexpr int NORMAL_NUMBER = 3;
+        static constexpr int MATH_EXPRESSION = 4;
         // File name contains patterns
         const string F_ROMAN_NUMBER = "RomanNumber.txt";
         const string F_MEASUREMENT  = "Measurement.txt";
         const string F_MEASUREMENT_1  = "Measurement_1.txt";
         const string F_NORMAL_NUMBER = "NormalNumber.txt";
+        const string F_MATH_EXPRESSION = "MathExpression.txt";
         map<int, vector<UnicodeString>> patterns;
         
         ICUMapping unitCurrencyMapping;
@@ -57,6 +59,7 @@ class Math{
         // Processing match by regex in each categories
         UnicodeString regexRomanNumber(RegexMatcher* matcher, UErrorCode &status);
         UnicodeString regexNormalNumber(RegexMatcher* matcher, UErrorCode &status, int pattern);
+        UnicodeString regexMathExpression(RegexMatcher* matcher, UErrorCode &status);
         
         bool LocalisNumber(UnicodeString& unit);
         UnicodeString LocalhandleMeasurement(RegexMatcher* matcher, UErrorCode &status, bool UseBaseUnit, int pattern) ;

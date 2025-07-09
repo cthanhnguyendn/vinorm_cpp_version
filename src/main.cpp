@@ -1,7 +1,15 @@
+#ifndef FALSE
+#define FALSE 0
+#endif
+#ifndef TRUE
+#define TRUE 1
+#endif
 #include <bits/stdc++.h>
 #include "unicode/utypes.h"
-#include "unicode/ustring.h"
+#include "unicode/unistr.h"
 #include "unicode/regex.h"
+#include "unicode/umachine.h"
+#include "unicode/ustring.h"
 #include "unicode/ucnv.h"
 #include "unicode/uclean.h"
 #include "unicode/schriter.h"
@@ -265,7 +273,7 @@ int main(int argc, char *argv[])
         normalizedText = removeExtraWhitespace(normalizedText);
         
         if (rule == true){
-            fout << normalizedText << "#line#";
+            std::string utf8str; normalizedText.toUTF8String(utf8str); fout << utf8str << "#line#";
             continue;
         }
         
@@ -457,7 +465,7 @@ int main(int argc, char *argv[])
         }
         result = removeNovoiceSymbol(result, 1);
         result = removeExtraWhitespace(result);
-        fout << result << "#line#";
+        std::string utf8result; result.toUTF8String(utf8result); fout << utf8result << "#line#";
         delete matcher;
         delete regexPattern;
     }

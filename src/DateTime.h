@@ -43,6 +43,7 @@ class DateTime{
         static constexpr int MONTH = 4;
         static constexpr int DATE_3 = 5;
         static constexpr int DATE_2 = 6;
+        static constexpr int DATE_MM_YYYY = 7;
         // File name contains patterns
         const string F_TIME = "Time.txt";
         const string F_DATE_FROM_TO_1 = "Date_From_To_1.txt";
@@ -51,6 +52,7 @@ class DateTime{
         const string F_DATE_1= "Date_1.txt";
         const string F_DATE_2= "Date_2.txt";
         const string F_DATE_3= "Date_3.txt";
+        const string F_DATE_MM_YYYY = "Date_MM_YYYY.txt";
         map<int, vector<UnicodeString>> patterns;
         // Processing match by regex in each categories
         UnicodeString regexTime(RegexMatcher* matcher, UErrorCode &status);
@@ -60,6 +62,7 @@ class DateTime{
         UnicodeString regexMonth(RegexMatcher* matcher, UErrorCode &status);
         UnicodeString regexDate3(RegexMatcher* matcher, UErrorCode &status);
         UnicodeString regexDate2(RegexMatcher* matcher, UErrorCode &status);
+        UnicodeString regexDateMMYYYY(RegexMatcher* matcher, UErrorCode &status);
         // Wrapper function to return string for replacing match by regex
         UnicodeString stringForReplace(int categories, RegexMatcher* matcher, UErrorCode &status);
         void loadPatterns(int categories, string filename);

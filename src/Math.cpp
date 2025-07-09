@@ -1,4 +1,15 @@
+#ifndef FALSE
+#define FALSE 0
+#endif
+#ifndef TRUE
+#define TRUE 1
+#endif
+#include <unicode/utypes.h>
+#include <unicode/unistr.h>
+#include <unicode/regex.h>
+#include <unicode/umachine.h>
 #include "Math.h"
+using ICUConstant::SOLIDUS;
 Math::Math() {
     
     
@@ -6,6 +17,7 @@ Math::Math() {
     loadPatterns(MEASUREMENT, F_MEASUREMENT);
     loadPatterns(MEASUREMENT_1, F_MEASUREMENT_1);
     loadPatterns(NORMAL_NUMBER, F_NORMAL_NUMBER);
+    loadPatterns(MATH_EXPRESSION, F_MATH_EXPRESSION);
 }
 Math::~Math() {
     u_cleanup();
@@ -21,6 +33,8 @@ UnicodeString Math::stringForReplace(int categories, RegexMatcher* matcher, UErr
             return LocalhandleMeasurement(matcher,status,0,pattern);
         case NORMAL_NUMBER:
             return regexNormalNumber(matcher, status, pattern);
+        case MATH_EXPRESSION:
+            return regexMathExpression(matcher, status);
             
         default:
             cerr << "[E] Invalid category: " << categories << '\n';
@@ -125,7 +139,7 @@ UnicodeString Math::regexNormalNumber(RegexMatcher* matcher, UErrorCode &status,
     UnicodeString match = matcher->group(status);
     UnicodeString sign="";
     if (matcher->group(1, status).trim() == "-"){
-        sign+=" trừ ";
+        sign += UnicodeString::fromUTF8(" trừ ");
     }
     if (pattern==0 || pattern ==2)
         return sign + ICUHelper::readNumber(match,0);
@@ -162,7 +176,7 @@ UnicodeString Math::LocalhandleMeasurement(RegexMatcher* matcher, UErrorCode &st
             result+=" "+unitBaseMapping.mappingOf(matcher->group(2, status).trim())+" ";
         }
         if(matcher->group(3, status)!=""){
-            result+=" trên ";
+            result += UnicodeString::fromUTF8(" trên ");
             if (!unitBaseMapping.hasMappingOf(matcher->group(3, status).trim())) {
                 return "";
                 //result+=" "+matcher->group(3, status)+" ";
@@ -172,7 +186,7 @@ UnicodeString Math::LocalhandleMeasurement(RegexMatcher* matcher, UErrorCode &st
             }
         }
         if (matcher->group(4, status).trim() == "-" )  {
-            result += " đến ";
+            result += UnicodeString::fromUTF8(" đến ");
         }
         return result;
     }
@@ -189,7 +203,7 @@ UnicodeString Math::LocalhandleMeasurement(RegexMatcher* matcher, UErrorCode &st
         unitCurrencyMapping.loadMappingFile(unitCurrencyFile.data());
         UnicodeString next="";
         if (matcher->group(3, status).trim() == "-" )  {
-            next = "đến";
+            next = UnicodeString::fromUTF8("đến");
         }
         if (!unitCurrencyMapping.hasMappingOf(unit)) {
             //cerr << "[L] Mapping Unit of [" << unit << "] does not exist\n";
@@ -200,4 +214,73 @@ UnicodeString Math::LocalhandleMeasurement(RegexMatcher* matcher, UErrorCode &st
         }
     }
     return UnicodeString();
+}
+
+UnicodeString Math::regexMathExpression(RegexMatcher* matcher, UErrorCode &status) {
+    UnicodeString match = matcher->group(status);
+    UnicodeString result;
+    UnicodeString number1, number2;
+    ConvertingNumber converter;
+    bool continuousDigits = false;
+    bool foundOperator = false;
+    UChar32 operator_char = 0;
+    
+    StringCharacterIterator iter(match);
+    for (auto c = iter.first32(); c != StringCharacterIterator::DONE; c = iter.next32()) {
+        if (DIGIT_ZERO <= c && c <= DIGIT_ZERO + 9) {
+            if (continuousDigits) {
+                if (foundOperator) {
+                    number2 += c;
+                } else {
+                    number1 += c;
+                }
+            } else {
+                if (foundOperator) {
+                    number2 = c;
+                } else {
+                    number1 = c;
+                }
+                continuousDigits = true;
+            }
+        } else if (c == PLUS_SIGN || c == HYPEN_MINUS || c == SOLIDUS || c == LATIN_SMALL_LETTER_A + ('x' - 'a') || c == LATIN_CAPITAL_LETTER_A + ('X' - 'A')) {
+            continuousDigits = false;
+            foundOperator = true;
+            operator_char = c;
+        } else if (c == FULL_STOP) {
+            // Handle equals sign
+            continuousDigits = false;
+            foundOperator = true;
+            operator_char = c;
+        } else {
+            if (continuousDigits) {
+                continuousDigits = false;
+                if (foundOperator) {
+                    number2 += converter.convertNumber(number2);
+                } else {
+                    number1 += converter.convertNumber(number1);
+                }
+            }
+        }
+    }
+    
+    // Convert the numbers
+    UnicodeString num1 = converter.convertNumber(number1);
+    UnicodeString num2 = converter.convertNumber(number2);
+    
+    // Build the result based on the operator
+    if (operator_char == PLUS_SIGN) {
+        result = num1 + UnicodeString::fromUTF8(" cộng ") + num2;
+    } else if (operator_char == HYPEN_MINUS) {
+        result = num1 + UnicodeString::fromUTF8(" trừ ") + num2;
+    } else if (operator_char == SOLIDUS) {
+        result = num1 + UnicodeString::fromUTF8(" chia ") + num2;
+    } else if (operator_char == LATIN_SMALL_LETTER_A + ('x' - 'a') || operator_char == LATIN_CAPITAL_LETTER_A + ('X' - 'A')) {
+        result = num1 + UnicodeString::fromUTF8(" nhân ") + num2;
+    } else if (operator_char == FULL_STOP) {
+        result = num1 + UnicodeString::fromUTF8(" bằng ") + num2;
+    }
+    // Collapse multiple spaces and trim
+    result.findAndReplace("  ", " ");
+    result.trim();
+    return result;
 }

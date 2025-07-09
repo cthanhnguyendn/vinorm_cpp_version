@@ -1,3 +1,9 @@
+#ifndef FALSE
+#define FALSE 0
+#endif
+#ifndef TRUE
+#define TRUE 1
+#endif
 // From version 2.0, vinorm do not normalize unknown word (Covid-19) keep it, this is used with espeak, let espeak backend handle this case
 #include "Address.h"
 void Address::loadPatterns(int categories, string filename) {
@@ -68,23 +74,26 @@ UnicodeString Address::normalizeText(const UnicodeString &input) {
             
         }
     }
+    // Collapse multiple spaces and trim
+    preResult.findAndReplace("  ", " ");
+    preResult.trim();
     return preResult;
 }
 UnicodeString Address::expandPrefixPD(const UnicodeString &prefix) {
     if (prefix == "kp")
-        return UnicodeString("khu phố");
+        return UnicodeString::fromUTF8("khu phố");
     else if (prefix == "q")
-        return UnicodeString("quận");
+        return UnicodeString::fromUTF8("quận");
     else if (prefix == "p")
-        return UnicodeString("phường");
+        return UnicodeString::fromUTF8("phường");
     else if (prefix == "h")
-        return UnicodeString("huyện");
+        return UnicodeString::fromUTF8("huyện");
     else if (prefix == "tx")
-        return UnicodeString("thị xã");
+        return UnicodeString::fromUTF8("thị xã");
     else if (prefix == "tp")
-        return UnicodeString("thành phố");
+        return UnicodeString::fromUTF8("thành phố");
     else if (prefix == "x")
-        return UnicodeString("xã");
+        return UnicodeString::fromUTF8("xã");
     cerr << "[E] Invalid prefix to expand for political division: " << prefix << '\n';
     return UnicodeString();
 }
@@ -126,7 +135,7 @@ UnicodeString Address::regexStreet(RegexMatcher* matcher, UErrorCode &status) {
                 if (DIGIT_ZERO ==c)
                 {
                     continuousDigits = false;
-                    result += "không ";
+                    result += UnicodeString::fromUTF8("không ");
                     number = UnicodeString();
                 }
                 else {
@@ -140,7 +149,7 @@ UnicodeString Address::regexStreet(RegexMatcher* matcher, UErrorCode &status) {
                 result += converter.convertNumber(number) + " ";
                 number = UnicodeString();
             }
-            result += "xuyệt ";
+            result += UnicodeString::fromUTF8("xuyệt ");
         } else if (c == HYPEN_MINUS) {
             if (continuousDigits) {
                 continuousDigits = false;
@@ -183,7 +192,7 @@ UnicodeString Address::regexOffice(RegexMatcher* matcher, UErrorCode& status) {
                 if (DIGIT_ZERO == c)
                 {
                     continuousDigits = false;
-                    result += "không ";
+                    result += UnicodeString::fromUTF8("không ");
                     number = UnicodeString();
                 }
                 else {
@@ -425,6 +434,7 @@ UnicodeString Address::regexCodenumber(RegexMatcher* matcher, UErrorCode& status
     UnicodeString PopWord;
     bool continuousDigits = false;
     bool continuous_Lowercase_Popular = false;
+    bool startsWithDigit = false;
     ConvertingNumber converter;
     ICUMapping letterSound;
     ICUMapping letterVN;
@@ -442,6 +452,15 @@ UnicodeString Address::regexCodenumber(RegexMatcher* matcher, UErrorCode& status
     letterSound.loadMappingFile(letterSoundFile.data());
 
     match.trim();
+    
+    // Check if the match starts with a digit
+    StringCharacterIterator checkIter(match);
+    UChar32 firstChar = checkIter.first32();
+    if (DIGIT_ZERO <= firstChar && firstChar <= DIGIT_ZERO + 9) {
+        startsWithDigit = true;
+        result += UnicodeString::fromUTF8("số ");
+    }
+    
     StringCharacterIterator iter(match);
     
     for (auto c = iter.first32(); c != StringCharacterIterator::DONE; c = iter.next32()) {
@@ -453,7 +472,7 @@ UnicodeString Address::regexCodenumber(RegexMatcher* matcher, UErrorCode& status
                 if (DIGIT_ZERO == c)
                 {
                     continuousDigits = false;
-                    result += "không ";
+                    result += UnicodeString::fromUTF8("không ");
                     number = UnicodeString();
                 }
                 else {
@@ -503,7 +522,7 @@ UnicodeString Address::regexCodenumber(RegexMatcher* matcher, UErrorCode& status
                 result+=PopWord+" ";
                 PopWord = UnicodeString();
             }
-            result += "xuyệt ";
+            result += UnicodeString::fromUTF8("xuyệt ");
         } else if (c == FULL_STOP ) {
             if (continuousDigits) {
                 continuousDigits  = false;
@@ -522,7 +541,7 @@ UnicodeString Address::regexCodenumber(RegexMatcher* matcher, UErrorCode& status
                 result+=PopWord+" ";
                 PopWord = UnicodeString();
             }
-            result += "chấm ";
+            result += UnicodeString::fromUTF8("chấm ");
         } else if (c == HYPEN_MINUS) {
             if (continuousDigits) {
                 continuousDigits  = false;
